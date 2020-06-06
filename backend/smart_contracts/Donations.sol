@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.6.0;
+pragma solidity ^0.6.0;
 // pragma experimental ABIEncoderV2;
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 contract Project is Ownable{
@@ -93,7 +93,7 @@ contract Project is Ownable{
     function payingOutActiveMilestoneAll(uint8 milestoneId) onlyOwner public {
         Milestone memory m = milestones[milestoneId];
         require(m.payoutAll == false);
-        require(m.targetAmount > donated_amount);
+        require(m.targetAmount < donated_amount);
         uint256 amount;
         if(milestoneId > 0){
             amount = m.targetAmount - already_withdrawn;
