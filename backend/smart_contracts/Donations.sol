@@ -43,6 +43,7 @@ contract Project is Ownable{
     event PayingOutPart(uint8 milestoneId, uint256 amount);
     event PayingOutAll(uint8 milestoneId, uint256 amount);
     event Donate(uint256 amount, uint8 milestoneId, address donor_add, bool wantsToVote);
+    event Donate_Light(uint256 amount);
     event Vote(uint8 milestoneId, address donor_add, votePosition vp);
     event AddMilestone(bytes _name, uint256 _amount);
     event PayingOutProject(uint256 _amount);
@@ -149,6 +150,7 @@ contract Project is Ownable{
     }
     
     /// @notice Funktion zum Spenden
+    /// @notice man muss sich vor dem spenden "registrieren" mit der Funktion "register()"
     /// @param _wantsToVote wenn der Spender abstimmen moechte true ansonsten false
     function donate(bool _wantsToVote) payable public {
         require(donors[msg.sender].exists);
@@ -164,6 +166,13 @@ contract Project is Ownable{
         }
         donated_amount += msg.value;
         emit Donate(msg.value, activeMilestone, msg.sender, _wantsToVote);
+    }
+    
+    /// @notice Funktion zum Spenden ohne Moeglichkeit des zurueckziehens oder waehlens
+    /// @notice diese Funktion verursacht geringere Kosten und mann muss sich nicht registrieren
+    function donate_lite() payable public {
+        donated_amount += msg.value;
+        emit Donate_Light(msg.value);
     }
     
     /// @notice Funktion zum Zurückziehen der Spende
