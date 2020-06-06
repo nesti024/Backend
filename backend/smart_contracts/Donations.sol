@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+﻿pragma solidity ^0.6.0;
 // pragma experimental ABIEncoderV2;
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 contract Project is Ownable{
@@ -33,7 +33,7 @@ contract Project is Ownable{
     }
   
     struct Donor {
-        bool[256] votedMilestones; 
+        uint256 votedMilestones; 
         uint256 donated_amount;
         uint8 donated_for_milestone;
         bool wantsToVote;
@@ -130,13 +130,13 @@ contract Project is Ownable{
         require(milestoneId<milestonesCounter);
         require(milestones[milestoneId].voteableUntil > block.timestamp);
         if(donors[msg.sender].wantsToVote
-        && (donors[msg.sender].votedMilestones[milestoneId] == false)){
+        && (donors[msg.sender].votedMilestones & (1 << uint256(milestoneId)) == 0)){
             if(vp == votePosition.POSITIVE_VOTE){
                 milestones[milestoneId].positiveVotes++;
             } else if(vp == votePosition.NEGATIVE_VOTE){
                 milestones[milestoneId].negativeVotes++;
             }
-            donors[msg.sender].votedMilestones[milestoneId] = true;
+            donors[msg.sender].votedMilestones = donors[msg.sender].votedMilestones | (1 << uint256(milestoneId));
             emit Vote(milestoneId,msg.sender,vp);
         }
     }    
