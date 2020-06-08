@@ -211,7 +211,7 @@ contract Project is Ownable{
         require(_targetAmount < projectTarget.amount);
         require(_voteableUntil >= block.timestamp + 1 days);
         if(milestonesCounter > 0){
-            require(milestones[milestonesCounter].targetAmount < _targetAmount);
+            require(milestones[milestonesCounter-1].targetAmount < _targetAmount);
         }
         milestones[milestonesCounter] = Milestone(_name,_targetAmount,_voteableUntil,0,0,false,false);
         milestonesCounter++;
