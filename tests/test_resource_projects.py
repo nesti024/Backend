@@ -1,6 +1,8 @@
 """Tests for resource projects."""
 import json
 
+from .test_blockstackauth import TOKEN_1
+
 
 def test_projects_get(client):
     """get without parameters."""
@@ -46,10 +48,30 @@ def test_projects_get_w_institution(client):
     assert res.json[1]["webpage"] == "www.swp.de"
 
 
+def test_projects_get_w_id(client):
+    """get with id_institution."""
+    res = client.get('/api/projects?id=2')
+    assert res._status_code == 200
+    assert len(res.json) == 1
+
+    assert res.json[0]["id"] == 2
+    assert res.json[0]["idinstitution"] == 3
+    assert res.json[0]["idsmartcontract"] == 2
+    assert res.json[0]["name"] == "Rangaroek verteidigen"
+    assert res.json[0]["webpage"] == "www.asgard.as"
+
+
+def test_projects_get_w_bad_id(client):
+    """get with id_institution."""
+    res = client.get('/api/projects?id=' + '1'*200)
+    assert res._status_code == 200
+    assert len(res.json) == 0
+
+
 def test_projects_get_w_non_existant_institution(client):
     """get with non existant id_institution."""
     res = client.get('/api/projects?idinstitution=1337')
-    assert res._status_code == 200  # ToDo: oder 404 Not Found?
+    assert res._status_code == 200
     assert len(res.json) == 0
 
 
@@ -93,7 +115,7 @@ def test_projects_id_get_existant_param(client):
     """get for project id with existant id."""
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
+    assert len(res.json) == 8
 
     assert res.json["id"] == 1
     assert res.json["idinstitution"] == 1
@@ -154,25 +176,32 @@ def test_projects_id_get_big_value(client):
 
 def test_projects_post_wo_params(client):
     res = client.post('/api/projects')
-    assert res._status_code == 403
-    assert res.json["error"] == "Not logged in"
+    assert res._status_code == 401
 
 
 def test_projects_post_w_auth_wo_params(client):
-    res = client.post('/api/projects', headers={"authToken": "1337"})
+    res = client.post('/api/projects', headers={"authToken": TOKEN_1})
     assert res._status_code == 403
     assert res.json["error"] == "Missing parameter"
 
 
+def test_projects_post_w_auth_bad_params(client):
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
+               "idInstitution": "abc"}
+    res = client.post('/api/projects', headers=headers)
+    assert res._status_code == 400
+    assert res.json["error"] == "bad argument"
+
+
 def test_projects_post_required_params(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933}
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 201
     assert res.json["status"] == "ok"
 
     res = client.get('/api/projects/4')
     assert res._status_code == 200
-    assert len(res.json) == 6
+    assert len(res.json) == 8
 
     assert res.json["id"] == 4
     assert res.json["idinstitution"] is None
@@ -183,7 +212,7 @@ def test_projects_post_required_params(client):
 
 
 def test_projects_post_w_bad_milestones(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "milestones": "dennis"}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 400
@@ -195,7 +224,7 @@ def test_projects_post_w_milestones(client):
         {"goal": 1000, "requiredVotes": 1337, "until": 1592094933},
         {"goal": 5000, "requiredVotes": 42, "until": 1592094932},
     ]
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "milestones": json.dumps(milestones)}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 201
@@ -203,7 +232,7 @@ def test_projects_post_w_milestones(client):
 
     res = client.get('/api/projects/4')
     assert res._status_code == 200
-    assert len(res.json) == 6
+    assert len(res.json) == 8
 
     assert res.json["id"] == 4
     assert res.json["idinstitution"] is None
@@ -228,7 +257,7 @@ def test_projects_post_w_milestones(client):
 
 
 def test_projects_post_w_webpage(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "webpage": "http://www.example.com"}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 201
@@ -236,7 +265,7 @@ def test_projects_post_w_webpage(client):
 
     res = client.get('/api/projects/4')
     assert res._status_code == 200
-    assert len(res.json) == 6
+    assert len(res.json) == 8
 
     assert res.json["id"] == 4
     assert res.json["idinstitution"] is None
@@ -247,7 +276,7 @@ def test_projects_post_w_webpage(client):
 
 
 def test_projects_post_w_bad_webpage(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "webpage": "notaurl#22*3\\asdf"}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 400
@@ -255,7 +284,7 @@ def test_projects_post_w_bad_webpage(client):
 
 
 def test_projects_post_w_institution(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "idInstitution": 3}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 201
@@ -263,7 +292,7 @@ def test_projects_post_w_institution(client):
 
     res = client.get('/api/projects/4')
     assert res._status_code == 200
-    assert len(res.json) == 6
+    assert len(res.json) == 8
 
     assert res.json["id"] == 4
     assert res.json["idinstitution"] == headers["idInstitution"]
@@ -274,21 +303,20 @@ def test_projects_post_w_institution(client):
 
 
 def test_projects_post_w_bad_institution(client):
-    headers = {"authToken": "1337", "name": "example", "goal": "[]", "requiredVotes": "1337", "until": 1592094933,
+    headers = {"authToken": TOKEN_1, "name": "example", "goal": 5000, "requiredVotes": "1337", "until": 1592094933,
                "idInstitution": 30000}
     res = client.post('/api/projects', headers=headers)
     assert res._status_code == 400
 
 
 def test_projects_patch_w_webpage(client):
-    headers = {"authToken": "1337", "webpage": "http://www.example.com"}
+    headers = {"authToken": TOKEN_1, "webpage": "http://www.example.com"}
     res = client.patch('/api/projects/1', headers=headers)
     assert res._status_code == 201
     assert res.json["status"] == "ok"
 
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
 
     assert res.json["id"] == 1
     assert res.json["idinstitution"] == 1
@@ -300,14 +328,13 @@ def test_projects_patch_w_webpage(client):
 
 
 def test_projects_patch_w_bad_webpage(client):
-    headers = {"authToken": "1337", "webpage": "notvalidurl"}
+    headers = {"authToken": TOKEN_1, "webpage": "notvalidurl"}
     res = client.patch('/api/projects/1', headers=headers)
     assert res._status_code == 400
     assert res.json["error"] == "webpage is not a valid url"
 
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
 
     assert res.json["id"] == 1
     assert res.json["idinstitution"] == 1
@@ -320,7 +347,7 @@ def test_projects_patch_w_bad_webpage(client):
 
 def test_projects_patch_wo_auth_wo_params(client):
     res = client.patch('/api/projects/1')
-    assert res._status_code == 403
+    assert res._status_code == 401
 
 
 def test_projects_patch_w_milestones(client):
@@ -328,14 +355,13 @@ def test_projects_patch_w_milestones(client):
         {"goal": 1000, "requiredVotes": 1337, "until": 1592094933},
         {"goal": 5000, "requiredVotes": 42, "until": 1592094932},
     ]
-    headers = {"authToken": "1337", "milestones": json.dumps(milestones)}
+    headers = {"authToken": TOKEN_1, "milestones": json.dumps(milestones)}
     res = client.patch('/api/projects/1', headers=headers)
     assert res._status_code == 201
 
     assert res.json["status"] == "ok"
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
 
     assert res.json["id"] == 1
     assert res.json["idinstitution"] == 1
@@ -388,14 +414,13 @@ def test_projects_patch_w_milestones(client):
 
 
 def test_projects_patch_wo_params(client):
-    headers = {"authToken": "1337"}
+    headers = {"authToken": TOKEN_1}
     res = client.patch('/api/projects/1', headers=headers)
     assert res._status_code == 201
 
     assert res.json["status"] == "ok"
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
 
     assert res.json["id"] == 1
     assert res.json["idinstitution"] == 1
@@ -434,21 +459,18 @@ def test_projects_patch_wo_params(client):
 
 
 def test_projects_patch_w_bad_milestone(client):
-    headers = {"authToken": "1337", "milestones": "badmilestones#-.,"}
+    headers = {"authToken": TOKEN_1, "milestones": "badmilestones#-.,"}
     res = client.patch('/api/projects/1', headers=headers)
     assert res._status_code == 400
 
     assert res.json["status"] == "invalid json"
     res = client.get('/api/projects/1')
     assert res._status_code == 200
-    assert len(res.json) == 6
     assert len(res.json["milestones"]) == 4
 
 
 def test_projects_patch_w_bad_id(client):
-    headers = {"authToken": "1337", "webpage": "http://www.example.com"}
+    headers = {"authToken": TOKEN_1, "webpage": "http://www.example.com"}
     res = client.patch('/api/projects/' + "1" * 400, headers=headers)
     assert res._status_code == 404
     assert res.json["error"] == "Project doesnt exist"
-
-# ToDo: bad_auth_token
